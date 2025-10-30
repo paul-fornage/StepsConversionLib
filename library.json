@@ -18,7 +18,9 @@
   ],
   "license": "MIT",
   "homepage": "paul.fornage.org",
-  "dependencies": {},
+  "dependencies": {
+    "RsTypeLib": "https://github.com/paul-fornage/RsTypeLib.git"
+  },
   "frameworks": "*",
   "platforms": "*"
 }
