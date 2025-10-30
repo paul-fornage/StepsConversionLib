@@ -1,0 +1,24 @@
+{
+  "name": "StepConversions",
+  "version": "1.0.0",
+  "description": "Convert between motor steps and travel distance",
+  "keywords": "Steps, Motor, people",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/paul-fornage/StepsConversionLib.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Paul Fornage",
+      "email": "paul@fornage.net",
+      "url": "paul.fornage.org"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "paul.fornage.org",
+  "dependencies": {},
+  "frameworks": "*",
+  "platforms": "*"
+}
