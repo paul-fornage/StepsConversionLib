@@ -17,7 +17,7 @@
 
 #ifndef STEPS_CONVERSIONS_H
 #define STEPS_CONVERSIONS_H
-#include "RsTypeNames.h"
+#include <RsTypeLib.h>
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
