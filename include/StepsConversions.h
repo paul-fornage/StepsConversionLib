@@ -17,12 +17,18 @@
 
 #ifndef STEPS_CONVERSIONS_H
 #define STEPS_CONVERSIONS_H
-#include <RsTypeLib.h>
+#include <RustNumberTypes.h>
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
+#define STEPS_PER_MOTOR_REV_MACRO 800
+#define MOTOR_REVS_PER_PINION_REV_MACRO 50
+#define PINION_DIAMETER_MM_MACRO 48
+
+
+
 
 
 static constexpr f64 HALF = 0.5;
+static constexpr f64 PI_VAL = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034;
 static constexpr i64 round_to_nearest(const f64 x) {
     return x < 0 ? static_cast<i64>(x - HALF) : static_cast<i64>(x + HALF);
 }
@@ -39,6 +45,7 @@ static_assert(round_to_nearest(-51) == -51, "round error");
 
 static constexpr i64 FIXED_BITS = 30;
 static constexpr i64 FIXED_DENOMINATOR = 1ll << FIXED_BITS;
+static constexpr i64 HALF_FIXED_DENOMINATOR = 1ll << (FIXED_BITS-1);
 
 #ifndef STEPS_PER_MOTOR_REV_MACRO
 #error "Need to assign `STEPS_PER_MOTOR_REV_MACRO` to a float"
@@ -61,17 +68,18 @@ static_assert(STEPS_PER_MOTOR_REV > 0.0, "STEPS_PER_MOTOR_REV_MACRO must be > 0"
 static_assert(MOTOR_REVS_PER_PINION_REV > 0.0, "MOTOR_REVS_PER_PINION_REV_MACRO must be > 0");
 static_assert(PINION_DIAMETER_MM > 0.0, "PINION_DIAMETER_MM_MACRO must be > 0");
 
-
-
-static constexpr f64 PINION_CIRCUMFERENCE_MM = PINION_DIAMETER_MM * M_PI;
+static constexpr f64 PINION_CIRCUMFERENCE_MM = PINION_DIAMETER_MM * PI_VAL;
 static constexpr f64 MM_PER_PINION_REV = PINION_CIRCUMFERENCE_MM;
 
 static constexpr f64 MM_TRAVEL_PER_MOTOR_REV = MM_PER_PINION_REV / MOTOR_REVS_PER_PINION_REV;
 static constexpr f64 INCH_TRAVEL_PER_MOTOR_REV = MM_TRAVEL_PER_MOTOR_REV / 25.4;
 static constexpr f64 HUNDREDTH_TRAVEL_PER_MOTOR_REV = INCH_TRAVEL_PER_MOTOR_REV * 100;
 
+static constexpr f64 MM_TRAVEL_PER_STEP = MM_TRAVEL_PER_MOTOR_REV / STEPS_PER_MOTOR_REV;
 static constexpr f64 HUNDREDTH_TRAVEL_PER_STEP = HUNDREDTH_TRAVEL_PER_MOTOR_REV / STEPS_PER_MOTOR_REV;
+
 static constexpr f64 STEPS_PER_HUNDREDTH_TRAVEL = STEPS_PER_MOTOR_REV / HUNDREDTH_TRAVEL_PER_MOTOR_REV;
+static constexpr f64 STEPS_PER_MM_TRAVEL = STEPS_PER_MOTOR_REV / MM_TRAVEL_PER_MOTOR_REV;
 
 // hundredths to steps
 static constexpr f64 HTS_RATIO = STEPS_PER_HUNDREDTH_TRAVEL;
@@ -87,7 +95,7 @@ static constexpr i64 FIXED_STH_RATIO = round_to_nearest(STH_RATIO * FIXED_DENOMI
  * @param steps input range [-2^22..2^22]
  */
 static constexpr i32 steps_to_hundredths(const i32 steps) {
-    return static_cast<i32>(((static_cast<i64>(steps) * FIXED_STH_RATIO)+(1ll<<(FIXED_BITS-1))) >> FIXED_BITS);
+    return static_cast<i32>(((static_cast<i64>(steps) * FIXED_STH_RATIO)+HALF_FIXED_DENOMINATOR) >> FIXED_BITS);
 }
 
 /**
@@ -95,20 +103,35 @@ static constexpr i32 steps_to_hundredths(const i32 steps) {
  * @param hundredths input range [-2^22..2^22]
  */
 static constexpr i32 hundredths_to_steps(const i32 hundredths) {
-    return static_cast<i32>(((static_cast<i64>(hundredths) * FIXED_HTS_RATIO)+(1ll<<(FIXED_BITS-1))) >> FIXED_BITS);
+    return static_cast<i32>(((static_cast<i64>(hundredths) * FIXED_HTS_RATIO)+HALF_FIXED_DENOMINATOR) >> FIXED_BITS);
 }
 
 /**
  * Self explanatory, only used to verify fast integer math alternative
  */
+static constexpr f64 f64_steps_to_hundredths(const i32 steps) {
+    return static_cast<f64>(steps) * STH_RATIO;
+}
+
+/**
+ * Self explanatory, only used to verify fast integer math alternative
+ */
+static constexpr f64 f64_hundredths_to_steps(const i32 hundredths) {
+    return static_cast<f64>(hundredths) * HTS_RATIO;
+}
+
+
+/**
+ * Self explanatory, only used to verify fast integer math alternative
+ */
 static constexpr i32 slow_steps_to_hundredths(const i32 steps) {
-    return static_cast<i32>(round_to_nearest(static_cast<f64>(steps) / HTS_RATIO));
+    return static_cast<i32>(round_to_nearest(f64_steps_to_hundredths(steps)));
 }
 /**
  * Self explanatory, only used to verify fast integer math alternative
  */
 static constexpr i32 slow_hundredths_to_steps(const i32 hundredths) {
-    return static_cast<i32>(round_to_nearest(static_cast<f64>(hundredths) * HTS_RATIO));
+    return static_cast<i32>(round_to_nearest(f64_hundredths_to_steps(hundredths)));
 }
 
 // hundredths per minute to steps per second
@@ -120,20 +143,29 @@ static constexpr f64 SPS_TO_HPM_RATIO = 1/HPM_TO_SPS_RATIO;
 // steps per second to hundredths per minute fixed fraction
 static constexpr i64 FIXED_SPS_TO_HPM_RATIO = round_to_nearest(SPS_TO_HPM_RATIO * FIXED_DENOMINATOR);
 
-
 /**
  * Steps per second to hundredths per minute
  * @param steps_per_second input range [-2^22..2^22]
  */
 static constexpr i32 sps_to_hpm(const i32 steps_per_second) {
-    return static_cast<i32>(((static_cast<i64>(steps_per_second) * FIXED_SPS_TO_HPM_RATIO)+(1ll<<(FIXED_BITS-1))) >> FIXED_BITS);
+    return static_cast<i32>(((static_cast<i64>(steps_per_second) * FIXED_SPS_TO_HPM_RATIO)+HALF_FIXED_DENOMINATOR) >> FIXED_BITS);
 }
+
 /**
  * hundredths per minute to steps per second
  * @param hundredths_per_minute input range [-2^22..2^22]
  */
 static constexpr i32 hpm_to_sps(const i32 hundredths_per_minute) {
-    return static_cast<i32>(((static_cast<i64>(hundredths_per_minute) * FIXED_HPM_TO_SPS_RATIO)+(1ll<<(FIXED_BITS-1))) >> FIXED_BITS);
+    return static_cast<i32>(((static_cast<i64>(hundredths_per_minute) * FIXED_HPM_TO_SPS_RATIO)+HALF_FIXED_DENOMINATOR) >> FIXED_BITS);
+}
+
+
+static constexpr f64 f64_sps_to_hpm(const i32 steps_per_second) {
+    return static_cast<f64>(steps_per_second) * SPS_TO_HPM_RATIO;
+}
+
+static constexpr f64 f64_hpm_to_sps(const i32 hundredths_per_minute) {
+    return static_cast<f64>(hundredths_per_minute) * HPM_TO_SPS_RATIO;
 }
 
 /**
@@ -142,7 +174,7 @@ static constexpr i32 hpm_to_sps(const i32 hundredths_per_minute) {
  * Slow version, only used to verify fast integer math alternative
  */
 static constexpr i32 slow_sps_to_hpm(const i32 steps_per_second) {
-    return static_cast<i32>(round_to_nearest(static_cast<f64>(steps_per_second) * SPS_TO_HPM_RATIO));
+    return static_cast<i32>(round_to_nearest(f64_sps_to_hpm(steps_per_second)));
 }
 /**
  * hundredths per minute to steps per second
@@ -150,8 +182,11 @@ static constexpr i32 slow_sps_to_hpm(const i32 steps_per_second) {
  * Slow version, only used to verify fast integer math alternative
  */
 static constexpr i32 slow_hpm_to_sps(const i32 hundredths_per_minute) {
-    return static_cast<i32>(round_to_nearest(static_cast<f64>(hundredths_per_minute) * HPM_TO_SPS_RATIO));
+    return static_cast<i32>(round_to_nearest(f64_hpm_to_sps(hundredths_per_minute)));
 }
+
+
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 
 #define TEST_DIST_CONVERSIONS_WITH_VAL(VAL) \
 static_assert(ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
@@ -268,5 +303,8 @@ TEST_SPEED_CONVERSIONS_WITH_VAL(12000)
 TEST_SPEED_CONVERSIONS_WITH_VAL(60000)
 TEST_SPEED_CONVERSIONS_WITH_VAL(300000)
 
+#undef TEST_SPEED_CONVERSIONS_WITH_VAL
+#undef TEST_DIST_CONVERSIONS_WITH_VAL
 #undef ABS
+
 #endif //STEPS_CONVERSIONS_H

@@ -1,0 +1,154 @@
+
+#define STEPS_PER_MOTOR_REV_MACRO 800
+#define MOTOR_REVS_PER_PINION_REV_MACRO 50
+#define PINION_DIAMETER_MM_MACRO 48
+#include <StepsConversions.h>
+#undef STEPS_PER_MOTOR_REV_MACRO
+#undef MOTOR_REVS_PER_PINION_REV_MACRO
+#undef PINION_DIAMETER_MM_MACRO
+
+#include <unity.h>
+#include <RustNumberTypes.h>
+#include <stdio.h>
+
+
+void run_basic_tests(){
+    // These tests are performed statically in the actual header, but I want my IDE to be able to do some analysis
+
+    #define ABS(x) ((x) < 0 ? -(x) : (x))
+
+    #define TEST_DIST_CONVERSIONS_WITH_VAL(VAL) \
+    TEST_ASSERT_MESSAGE(ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
+    <= static_cast<i32>(round_to_nearest(STH_RATIO/2.0)), "Step conversion failed 1"); \
+    TEST_ASSERT_MESSAGE(ABS(hundredths_to_steps(steps_to_hundredths(VAL)) - VAL) \
+    <= static_cast<i32>(round_to_nearest(HTS_RATIO/2.0)), "Step conversion failed 2"); \
+    TEST_ASSERT_MESSAGE(ABS(steps_to_hundredths(VAL) - slow_steps_to_hundredths(VAL)) \
+    <= 0, "Step conversion failed 3"); \
+    TEST_ASSERT_MESSAGE(ABS(hundredths_to_steps(VAL) - slow_hundredths_to_steps(VAL)) \
+    <= 0, "Step conversion failed 4"); \
+
+    #define TEST_SPEED_CONVERSIONS_WITH_VAL(VAL) \
+    TEST_ASSERT_MESSAGE(ABS(sps_to_hpm(hpm_to_sps(VAL)) - VAL) \
+    <= static_cast<i32>(round_to_nearest(SPS_TO_HPM_RATIO/2.0)), "Step conversion failed 1"); \
+    TEST_ASSERT_MESSAGE(ABS(hpm_to_sps(sps_to_hpm(VAL)) - VAL) \
+    <= static_cast<i32>(round_to_nearest(HPM_TO_SPS_RATIO/2.0)), "Step conversion failed 2"); \
+    TEST_ASSERT_MESSAGE(ABS(sps_to_hpm(VAL) - slow_sps_to_hpm(VAL)) \
+    <= 0, "Step conversion failed 3"); \
+    TEST_ASSERT_MESSAGE(ABS(hpm_to_sps(VAL) - slow_hpm_to_sps(VAL)) \
+    <= 0, "Step conversion failed 4"); \
+
+    TEST_SPEED_CONVERSIONS_WITH_VAL(489000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(489)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(1)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(0)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(80000000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-489000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-489)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-1)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-0)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-80000000)
+
+    TEST_DIST_CONVERSIONS_WITH_VAL(489000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(489)
+    TEST_DIST_CONVERSIONS_WITH_VAL(1)
+    TEST_DIST_CONVERSIONS_WITH_VAL(0)
+    TEST_DIST_CONVERSIONS_WITH_VAL(800000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(-489000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(-489)
+    TEST_DIST_CONVERSIONS_WITH_VAL(-1)
+    TEST_DIST_CONVERSIONS_WITH_VAL(-0)
+    TEST_DIST_CONVERSIONS_WITH_VAL(-800000)
+
+
+    TEST_DIST_CONVERSIONS_WITH_VAL((1<<22))
+    TEST_DIST_CONVERSIONS_WITH_VAL(-(1<<22))
+
+    // Prime numbers
+    TEST_DIST_CONVERSIONS_WITH_VAL(2)
+    TEST_DIST_CONVERSIONS_WITH_VAL(3)
+    TEST_DIST_CONVERSIONS_WITH_VAL(5)
+    TEST_DIST_CONVERSIONS_WITH_VAL(7)
+    TEST_DIST_CONVERSIONS_WITH_VAL(11)
+    TEST_DIST_CONVERSIONS_WITH_VAL(97)
+
+    // Powers of 2 (important for binary operations)
+    TEST_DIST_CONVERSIONS_WITH_VAL(2)
+    TEST_DIST_CONVERSIONS_WITH_VAL(4)
+    TEST_DIST_CONVERSIONS_WITH_VAL(8)
+    TEST_DIST_CONVERSIONS_WITH_VAL(16)
+    TEST_DIST_CONVERSIONS_WITH_VAL(32)
+    TEST_DIST_CONVERSIONS_WITH_VAL(64)
+    TEST_DIST_CONVERSIONS_WITH_VAL(128)
+    TEST_DIST_CONVERSIONS_WITH_VAL(256)
+    TEST_DIST_CONVERSIONS_WITH_VAL(512)
+    TEST_DIST_CONVERSIONS_WITH_VAL(1024)
+    TEST_DIST_CONVERSIONS_WITH_VAL(2048)
+    TEST_DIST_CONVERSIONS_WITH_VAL(4096)
+    TEST_DIST_CONVERSIONS_WITH_VAL(8192)
+
+    // Values around HTS_RATIO
+    TEST_DIST_CONVERSIONS_WITH_VAL(67)
+    TEST_DIST_CONVERSIONS_WITH_VAL(68)
+    TEST_DIST_CONVERSIONS_WITH_VAL(134)
+    TEST_DIST_CONVERSIONS_WITH_VAL(135)
+
+    // Common values in industrial settings
+    TEST_DIST_CONVERSIONS_WITH_VAL(1000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(10000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(100000)
+    TEST_DIST_CONVERSIONS_WITH_VAL(1000000)
+
+    // Similar tests for speed conversions
+    TEST_SPEED_CONVERSIONS_WITH_VAL((1<<24))
+    TEST_SPEED_CONVERSIONS_WITH_VAL(-(1<<24))
+
+    // Prime numbers for speed
+    TEST_SPEED_CONVERSIONS_WITH_VAL(2)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(3)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(5)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(7)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(11)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(97)
+
+    // Powers of 2 for speed
+    TEST_SPEED_CONVERSIONS_WITH_VAL(2)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(4)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(16)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(64)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(256)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(1024)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(4096)
+
+    // Values around HPM_TO_SPS_RATIO
+    TEST_SPEED_CONVERSIONS_WITH_VAL(1)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(60)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(120)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(600)
+
+    // Typical industrial speeds
+    TEST_SPEED_CONVERSIONS_WITH_VAL(3000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(6000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(12000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(60000)
+    TEST_SPEED_CONVERSIONS_WITH_VAL(300000)
+
+    #undef TEST_SPEED_CONVERSIONS_WITH_VAL
+    #undef TEST_DIST_CONVERSIONS_WITH_VAL
+    #undef ABS
+}
+
+
+void setUp(void) {
+    // set stuff up here
+}
+
+void tearDown(void) {
+    // clean stuff up here
+}
+
+
+int main(int argc, char **argv) {
+    UNITY_BEGIN();
+    RUN_TEST(run_basic_tests);
+    return UNITY_END();
+}
