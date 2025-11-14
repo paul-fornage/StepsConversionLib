@@ -27,23 +27,41 @@
 
 
 
-static constexpr f64 HALF = 0.5;
+
 static constexpr f64 PI_VAL = 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034;
-static constexpr i64 round_to_nearest(const f64 x) {
-    return x < 0 ? static_cast<i64>(x - HALF) : static_cast<i64>(x + HALF);
+
+
+// There are probably better ways to do this and ABS is always a crowded namespace
+namespace StepsConversionHelpers{
+    static constexpr u32 ABS(const i32 a) {
+        return (a > 0) ? a : -a;
+    }
+    static constexpr f64 ABS(const f64 a) {
+        return (a > 0) ? a : -a;
+    }
+    static constexpr f64 HALF = 0.5;
+    static constexpr i64 round_to_nearest(const f64 x) {
+        return x < 0 ? static_cast<i64>(x - HALF) : static_cast<i64>(x + HALF);
+    }
+
+    static_assert(round_to_nearest(0.2) == 0, "round error");
+    static_assert(round_to_nearest(0.5) == 1, "round error");
+    static_assert(round_to_nearest(0.51) == 1, "round error");
+    static_assert(round_to_nearest(51) == 51, "round error");
+    static_assert(round_to_nearest(-0.2) == -0, "round error");
+    static_assert(round_to_nearest(-0.5) == -1, "round error");
+    static_assert(round_to_nearest(-0.51) == -1, "round error");
+    static_assert(round_to_nearest(-51) == -51, "round error");
 }
 
+using namespace StepsConversionHelpers;
 
-static_assert(round_to_nearest(0.2) == 0, "round error");
-static_assert(round_to_nearest(0.5) == 1, "round error");
-static_assert(round_to_nearest(0.51) == 1, "round error");
-static_assert(round_to_nearest(51) == 51, "round error");
-static_assert(round_to_nearest(-0.2) == -0, "round error");
-static_assert(round_to_nearest(-0.5) == -1, "round error");
-static_assert(round_to_nearest(-0.51) == -1, "round error");
-static_assert(round_to_nearest(-51) == -51, "round error");
-
+#ifndef FIXED_BITS_MACRO
 static constexpr i64 FIXED_BITS = 30;
+#else
+static constexpr i64 FIXED_BITS = FIXED_BITS_MACRO;
+#endif
+
 static constexpr i64 FIXED_DENOMINATOR = 1ll << FIXED_BITS;
 static constexpr i64 HALF_FIXED_DENOMINATOR = 1ll << (FIXED_BITS-1);
 
@@ -109,15 +127,15 @@ static constexpr i32 hundredths_to_steps(const i32 hundredths) {
 /**
  * Self explanatory, only used to verify fast integer math alternative
  */
-static constexpr f64 f64_steps_to_hundredths(const i32 steps) {
-    return static_cast<f64>(steps) * STH_RATIO;
+static constexpr f64 f64_steps_to_hundredths(const f64 steps) {
+    return steps * STH_RATIO;
 }
 
 /**
  * Self explanatory, only used to verify fast integer math alternative
  */
-static constexpr f64 f64_hundredths_to_steps(const i32 hundredths) {
-    return static_cast<f64>(hundredths) * HTS_RATIO;
+static constexpr f64 f64_hundredths_to_steps(const f64 hundredths) {
+    return hundredths * HTS_RATIO;
 }
 
 
@@ -160,12 +178,12 @@ static constexpr i32 hpm_to_sps(const i32 hundredths_per_minute) {
 }
 
 
-static constexpr f64 f64_sps_to_hpm(const i32 steps_per_second) {
-    return static_cast<f64>(steps_per_second) * SPS_TO_HPM_RATIO;
+static constexpr f64 f64_sps_to_hpm(const f64 steps_per_second) {
+    return steps_per_second * SPS_TO_HPM_RATIO;
 }
 
-static constexpr f64 f64_hpm_to_sps(const i32 hundredths_per_minute) {
-    return static_cast<f64>(hundredths_per_minute) * HPM_TO_SPS_RATIO;
+static constexpr f64 f64_hpm_to_sps(const f64 hundredths_per_minute) {
+    return hundredths_per_minute * HPM_TO_SPS_RATIO;
 }
 
 /**
@@ -186,7 +204,9 @@ static constexpr i32 slow_hpm_to_sps(const i32 hundredths_per_minute) {
 }
 
 
-#define ABS(x) ((x) < 0 ? -(x) : (x))
+
+
+
 
 #define TEST_DIST_CONVERSIONS_WITH_VAL(VAL) \
 static_assert(ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
@@ -197,6 +217,10 @@ static_assert(ABS(steps_to_hundredths(VAL) - slow_steps_to_hundredths(VAL)) \
     <= 0, "Step conversion failed 3"); \
 static_assert(ABS(hundredths_to_steps(VAL) - slow_hundredths_to_steps(VAL)) \
     <= 0, "Step conversion failed 4"); \
+static_assert(ABS(f64_steps_to_hundredths(f64_hundredths_to_steps(VAL)) - VAL) \
+    <= STH_RATIO/2.0, "Step conversion failed 5"); \
+static_assert(ABS(f64_hundredths_to_steps(f64_steps_to_hundredths(VAL)) - VAL) \
+    <= HTS_RATIO/2.0, "Step conversion failed 5"); \
 
 #define TEST_SPEED_CONVERSIONS_WITH_VAL(VAL) \
 static_assert(ABS(sps_to_hpm(hpm_to_sps(VAL)) - VAL) \
@@ -207,6 +231,10 @@ static_assert(ABS(sps_to_hpm(VAL) - slow_sps_to_hpm(VAL)) \
     <= 0, "Step conversion failed 3"); \
 static_assert(ABS(hpm_to_sps(VAL) - slow_hpm_to_sps(VAL)) \
     <= 0, "Step conversion failed 4"); \
+static_assert(ABS(f64_sps_to_hpm(f64_hpm_to_sps(VAL)) - VAL) \
+    <= SPS_TO_HPM_RATIO/2.0, "Step conversion failed 1"); \
+static_assert(ABS(f64_hpm_to_sps(f64_sps_to_hpm(VAL)) - VAL) \
+    <= HPM_TO_SPS_RATIO/2.0, "Step conversion failed 2"); \
 
 TEST_SPEED_CONVERSIONS_WITH_VAL(489000)
 TEST_SPEED_CONVERSIONS_WITH_VAL(489)
@@ -305,6 +333,5 @@ TEST_SPEED_CONVERSIONS_WITH_VAL(300000)
 
 #undef TEST_SPEED_CONVERSIONS_WITH_VAL
 #undef TEST_DIST_CONVERSIONS_WITH_VAL
-#undef ABS
 
 #endif //STEPS_CONVERSIONS_H

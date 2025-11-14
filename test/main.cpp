@@ -14,28 +14,35 @@
 
 void run_basic_tests(){
     // These tests are performed statically in the actual header, but I want my IDE to be able to do some analysis
-
-    #define ABS(x) ((x) < 0 ? -(x) : (x))
+    // using namespace StepsConversionHelpers;
 
     #define TEST_DIST_CONVERSIONS_WITH_VAL(VAL) \
     TEST_ASSERT_MESSAGE(ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
-    <= static_cast<i32>(round_to_nearest(STH_RATIO/2.0)), "Step conversion failed 1"); \
+        <= static_cast<i32>(round_to_nearest(STH_RATIO/2.0)), "Step distance conversion failed 1"); \
     TEST_ASSERT_MESSAGE(ABS(hundredths_to_steps(steps_to_hundredths(VAL)) - VAL) \
-    <= static_cast<i32>(round_to_nearest(HTS_RATIO/2.0)), "Step conversion failed 2"); \
+        <= static_cast<i32>(round_to_nearest(HTS_RATIO/2.0)), "Step distance conversion failed 2"); \
     TEST_ASSERT_MESSAGE(ABS(steps_to_hundredths(VAL) - slow_steps_to_hundredths(VAL)) \
-    <= 0, "Step conversion failed 3"); \
+        <= 0, "Step distance conversion failed 3"); \
     TEST_ASSERT_MESSAGE(ABS(hundredths_to_steps(VAL) - slow_hundredths_to_steps(VAL)) \
-    <= 0, "Step conversion failed 4"); \
+        <= 0, "Step distance conversion failed 4"); \
+    TEST_ASSERT_MESSAGE(ABS(f64_steps_to_hundredths(f64_hundredths_to_steps(VAL)) - VAL) \
+        <= STH_RATIO/2.0, "Step distance conversion failed 5"); \
+    TEST_ASSERT_MESSAGE(ABS(f64_hundredths_to_steps(f64_steps_to_hundredths(VAL)) - VAL) \
+        <= HTS_RATIO/2.0, "Step distance conversion failed 5"); \
 
     #define TEST_SPEED_CONVERSIONS_WITH_VAL(VAL) \
     TEST_ASSERT_MESSAGE(ABS(sps_to_hpm(hpm_to_sps(VAL)) - VAL) \
-    <= static_cast<i32>(round_to_nearest(SPS_TO_HPM_RATIO/2.0)), "Step conversion failed 1"); \
+        <= static_cast<i32>(round_to_nearest(SPS_TO_HPM_RATIO/2.0)), "Step speed conversion failed 1"); \
     TEST_ASSERT_MESSAGE(ABS(hpm_to_sps(sps_to_hpm(VAL)) - VAL) \
-    <= static_cast<i32>(round_to_nearest(HPM_TO_SPS_RATIO/2.0)), "Step conversion failed 2"); \
+        <= static_cast<i32>(round_to_nearest(HPM_TO_SPS_RATIO/2.0)), "Step speed conversion failed 2"); \
     TEST_ASSERT_MESSAGE(ABS(sps_to_hpm(VAL) - slow_sps_to_hpm(VAL)) \
-    <= 0, "Step conversion failed 3"); \
+        <= 0, "Step speed conversion failed 3"); \
     TEST_ASSERT_MESSAGE(ABS(hpm_to_sps(VAL) - slow_hpm_to_sps(VAL)) \
-    <= 0, "Step conversion failed 4"); \
+        <= 0, "Step speed conversion failed 4"); \
+    TEST_ASSERT_MESSAGE(ABS(f64_sps_to_hpm(f64_hpm_to_sps(VAL)) - VAL) \
+        <= SPS_TO_HPM_RATIO/2.0, "Step speed conversion failed 1"); \
+    TEST_ASSERT_MESSAGE(ABS(f64_hpm_to_sps(f64_sps_to_hpm(VAL)) - VAL) \
+        <= HPM_TO_SPS_RATIO/2.0, "Step speed conversion failed 2"); \
 
     TEST_SPEED_CONVERSIONS_WITH_VAL(489000)
     TEST_SPEED_CONVERSIONS_WITH_VAL(489)
@@ -132,9 +139,6 @@ void run_basic_tests(){
     TEST_SPEED_CONVERSIONS_WITH_VAL(60000)
     TEST_SPEED_CONVERSIONS_WITH_VAL(300000)
 
-    #undef TEST_SPEED_CONVERSIONS_WITH_VAL
-    #undef TEST_DIST_CONVERSIONS_WITH_VAL
-    #undef ABS
 }
 
 
