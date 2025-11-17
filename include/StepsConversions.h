@@ -19,11 +19,6 @@
 #define STEPS_CONVERSIONS_H
 #include <RustNumberTypes.h>
 
-#define STEPS_PER_MOTOR_REV_MACRO 800
-#define MOTOR_REVS_PER_PINION_REV_MACRO 50
-#define PINION_DIAMETER_MM_MACRO 48
-
-
 
 
 
@@ -67,12 +62,15 @@ static constexpr i64 HALF_FIXED_DENOMINATOR = 1ll << (FIXED_BITS-1);
 
 #ifndef STEPS_PER_MOTOR_REV_MACRO
 #error "Need to assign `STEPS_PER_MOTOR_REV_MACRO` to a float"
+#define STEPS_PER_MOTOR_REV_MACRO 800
 #endif
 #ifndef MOTOR_REVS_PER_PINION_REV_MACRO
 #error "Need to assign `MOTOR_REVS_PER_PINION_REV_MACRO` to a float"
+#define MOTOR_REVS_PER_PINION_REV_MACRO 50
 #endif
 #ifndef PINION_DIAMETER_MM_MACRO
 #error "Need to assign `PINION_DIAMETER_MM_MACRO` to a float"
+#define PINION_DIAMETER_MM_MACRO 48
 #endif
 
 static constexpr f64 STEPS_PER_MOTOR_REV = STEPS_PER_MOTOR_REV_MACRO;
