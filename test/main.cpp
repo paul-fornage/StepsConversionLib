@@ -2,7 +2,7 @@
 #define STEPS_PER_MOTOR_REV_MACRO 800
 #define MOTOR_REVS_PER_PINION_REV_MACRO 50
 #define PINION_DIAMETER_MM_MACRO 48
-#include <StepsConversions.h>
+#include <ConstexprStepsConversions.h>
 #undef STEPS_PER_MOTOR_REV_MACRO
 #undef MOTOR_REVS_PER_PINION_REV_MACRO
 #undef PINION_DIAMETER_MM_MACRO
