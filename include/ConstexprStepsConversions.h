@@ -20,35 +20,11 @@
 #include <RustNumberTypes.h>
 #include <StepsConversionCommon.h>
 
-#ifdef RUNTIME_STEPS_CONVERSIONS_H
-#error "For now can not use both constexpr and runtime versions of lib for namespace collisions I don't feel like solving"
-#endif
-
 
 
 // There are probably better ways to do this and ABS is always a crowded namespace
 namespace ConstexprStepsConversion {
-    namespace Helpers{
-        static constexpr u32 ABS(const i32 a) {
-            return (a > 0) ? a : -a;
-        }
-        static constexpr f64 ABS(const f64 a) {
-            return (a > 0) ? a : -a;
-        }
-        static constexpr f64 HALF = 0.5;
-        static constexpr i64 round_to_nearest(const f64 x) {
-            return x < 0 ? static_cast<i64>(x - HALF) : static_cast<i64>(x + HALF);
-        }
 
-        static_assert(round_to_nearest(0.2) == 0, "round error");
-        static_assert(round_to_nearest(0.5) == 1, "round error");
-        static_assert(round_to_nearest(0.51) == 1, "round error");
-        static_assert(round_to_nearest(51) == 51, "round error");
-        static_assert(round_to_nearest(-0.2) == -0, "round error");
-        static_assert(round_to_nearest(-0.5) == -1, "round error");
-        static_assert(round_to_nearest(-0.51) == -1, "round error");
-        static_assert(round_to_nearest(-51) == -51, "round error");
-    }
 
 #ifndef FIXED_BITS_MACRO
     static constexpr i64 FIXED_BITS = 30;
@@ -99,11 +75,11 @@ namespace ConstexprStepsConversion {
     // hundredths to steps
     static constexpr f64 HTS_RATIO = STEPS_PER_HUNDREDTH_TRAVEL;
     // hundredths to steps fixed fraction
-    static constexpr i64 FIXED_HTS_RATIO = Helpers::round_to_nearest(HTS_RATIO * FIXED_DENOMINATOR);
+    static constexpr i64 FIXED_HTS_RATIO = StepsConversionHelpers::round_to_nearest(HTS_RATIO * FIXED_DENOMINATOR);
     // steps to hundredths
     static constexpr f64 STH_RATIO = HUNDREDTH_TRAVEL_PER_STEP;
     // steps to hundredths fixed fraction
-    static constexpr i64 FIXED_STH_RATIO = Helpers::round_to_nearest(STH_RATIO * FIXED_DENOMINATOR);
+    static constexpr i64 FIXED_STH_RATIO = StepsConversionHelpers::round_to_nearest(STH_RATIO * FIXED_DENOMINATOR);
 
     /**
      * convert steps at motor to hundredths of an inch of travel
@@ -140,23 +116,23 @@ namespace ConstexprStepsConversion {
      * Self explanatory, only used to verify fast integer math alternative
      */
     static constexpr i32 slow_steps_to_hundredths(const i32 steps) {
-        return static_cast<i32>(Helpers::round_to_nearest(f64_steps_to_hundredths(steps)));
+        return static_cast<i32>(StepsConversionHelpers::round_to_nearest(f64_steps_to_hundredths(steps)));
     }
     /**
      * Self explanatory, only used to verify fast integer math alternative
      */
     static constexpr i32 slow_hundredths_to_steps(const i32 hundredths) {
-        return static_cast<i32>(Helpers::round_to_nearest(f64_hundredths_to_steps(hundredths)));
+        return static_cast<i32>(StepsConversionHelpers::round_to_nearest(f64_hundredths_to_steps(hundredths)));
     }
 
     // hundredths per minute to steps per second
     static constexpr f64 HPM_TO_SPS_RATIO = HTS_RATIO/60;
     // hundredths per minute to steps per second fixed fraction
-    static constexpr i64 FIXED_HPM_TO_SPS_RATIO = Helpers::round_to_nearest(HPM_TO_SPS_RATIO * FIXED_DENOMINATOR);
+    static constexpr i64 FIXED_HPM_TO_SPS_RATIO = StepsConversionHelpers::round_to_nearest(HPM_TO_SPS_RATIO * FIXED_DENOMINATOR);
     // steps per second to hundredths per minute
     static constexpr f64 SPS_TO_HPM_RATIO = 1/HPM_TO_SPS_RATIO;
     // steps per second to hundredths per minute fixed fraction
-    static constexpr i64 FIXED_SPS_TO_HPM_RATIO = Helpers::round_to_nearest(SPS_TO_HPM_RATIO * FIXED_DENOMINATOR);
+    static constexpr i64 FIXED_SPS_TO_HPM_RATIO = StepsConversionHelpers::round_to_nearest(SPS_TO_HPM_RATIO * FIXED_DENOMINATOR);
 
     /**
      * Steps per second to hundredths per minute
@@ -189,7 +165,7 @@ namespace ConstexprStepsConversion {
      * Slow version, only used to verify fast integer math alternative
      */
     static constexpr i32 slow_sps_to_hpm(const i32 steps_per_second) {
-        return static_cast<i32>(Helpers::round_to_nearest(f64_sps_to_hpm(steps_per_second)));
+        return static_cast<i32>(StepsConversionHelpers::round_to_nearest(f64_sps_to_hpm(steps_per_second)));
     }
     /**
      * hundredths per minute to steps per second
@@ -197,7 +173,7 @@ namespace ConstexprStepsConversion {
      * Slow version, only used to verify fast integer math alternative
      */
     static constexpr i32 slow_hpm_to_sps(const i32 hundredths_per_minute) {
-        return static_cast<i32>(Helpers::round_to_nearest(f64_hpm_to_sps(hundredths_per_minute)));
+        return static_cast<i32>(StepsConversionHelpers::round_to_nearest(f64_hpm_to_sps(hundredths_per_minute)));
     }
 
 
@@ -206,31 +182,31 @@ namespace ConstexprStepsConversion {
 
 
 #define TEST_DIST_CONVERSIONS_WITH_VAL(VAL) \
-static_assert(Helpers::ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
-<= static_cast<i32>(Helpers::round_to_nearest(STH_RATIO/2.0)), "Step conversion failed 1"); \
-static_assert(Helpers::ABS(hundredths_to_steps(steps_to_hundredths(VAL)) - VAL) \
-<= static_cast<i32>(Helpers::round_to_nearest(HTS_RATIO/2.0)), "Step conversion failed 2"); \
-static_assert(Helpers::ABS(steps_to_hundredths(VAL) - slow_steps_to_hundredths(VAL)) \
+static_assert(StepsConversionHelpers::ABS(steps_to_hundredths(hundredths_to_steps(VAL)) - VAL) \
+<= static_cast<i32>(StepsConversionHelpers::round_to_nearest(STH_RATIO/2.0)), "Step conversion failed 1"); \
+static_assert(StepsConversionHelpers::ABS(hundredths_to_steps(steps_to_hundredths(VAL)) - VAL) \
+<= static_cast<i32>(StepsConversionHelpers::round_to_nearest(HTS_RATIO/2.0)), "Step conversion failed 2"); \
+static_assert(StepsConversionHelpers::ABS(steps_to_hundredths(VAL) - slow_steps_to_hundredths(VAL)) \
 <= 0, "Step conversion failed 3"); \
-static_assert(Helpers::ABS(hundredths_to_steps(VAL) - slow_hundredths_to_steps(VAL)) \
+static_assert(StepsConversionHelpers::ABS(hundredths_to_steps(VAL) - slow_hundredths_to_steps(VAL)) \
 <= 0, "Step conversion failed 4"); \
-static_assert(Helpers::ABS(f64_steps_to_hundredths(f64_hundredths_to_steps(VAL)) - VAL) \
+static_assert(StepsConversionHelpers::ABS(f64_steps_to_hundredths(f64_hundredths_to_steps(VAL)) - VAL) \
 <= STH_RATIO/2.0, "Step conversion failed 5"); \
-static_assert(Helpers::ABS(f64_hundredths_to_steps(f64_steps_to_hundredths(VAL)) - VAL) \
+static_assert(StepsConversionHelpers::ABS(f64_hundredths_to_steps(f64_steps_to_hundredths(VAL)) - VAL) \
 <= HTS_RATIO/2.0, "Step conversion failed 5"); \
 
 #define TEST_SPEED_CONVERSIONS_WITH_VAL(VAL) \
-static_assert(Helpers::ABS(sps_to_hpm(hpm_to_sps(VAL)) - VAL) \
-<= static_cast<i32>(Helpers::round_to_nearest(SPS_TO_HPM_RATIO/2.0)), "Step conversion failed 1"); \
-static_assert(Helpers::ABS(hpm_to_sps(sps_to_hpm(VAL)) - VAL) \
-<= static_cast<i32>(Helpers::round_to_nearest(HPM_TO_SPS_RATIO/2.0)), "Step conversion failed 2"); \
-static_assert(Helpers::ABS(sps_to_hpm(VAL) - slow_sps_to_hpm(VAL)) \
+static_assert(StepsConversionHelpers::ABS(sps_to_hpm(hpm_to_sps(VAL)) - VAL) \
+<= static_cast<i32>(StepsConversionHelpers::round_to_nearest(SPS_TO_HPM_RATIO/2.0)), "Step conversion failed 1"); \
+static_assert(StepsConversionHelpers::ABS(hpm_to_sps(sps_to_hpm(VAL)) - VAL) \
+<= static_cast<i32>(StepsConversionHelpers::round_to_nearest(HPM_TO_SPS_RATIO/2.0)), "Step conversion failed 2"); \
+static_assert(StepsConversionHelpers::ABS(sps_to_hpm(VAL) - slow_sps_to_hpm(VAL)) \
 <= 0, "Step conversion failed 3"); \
-static_assert(Helpers::ABS(hpm_to_sps(VAL) - slow_hpm_to_sps(VAL)) \
+static_assert(StepsConversionHelpers::ABS(hpm_to_sps(VAL) - slow_hpm_to_sps(VAL)) \
 <= 0, "Step conversion failed 4"); \
-static_assert(Helpers::ABS(f64_sps_to_hpm(f64_hpm_to_sps(VAL)) - VAL) \
+static_assert(StepsConversionHelpers::ABS(f64_sps_to_hpm(f64_hpm_to_sps(VAL)) - VAL) \
 <= SPS_TO_HPM_RATIO/2.0, "Step conversion failed 1"); \
-static_assert(Helpers::ABS(f64_hpm_to_sps(f64_sps_to_hpm(VAL)) - VAL) \
+static_assert(StepsConversionHelpers::ABS(f64_hpm_to_sps(f64_sps_to_hpm(VAL)) - VAL) \
 <= HPM_TO_SPS_RATIO/2.0, "Step conversion failed 2"); \
 
 TEST_SPEED_CONVERSIONS_WITH_VAL(489000)

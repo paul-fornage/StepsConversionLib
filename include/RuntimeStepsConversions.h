@@ -9,9 +9,6 @@
 #include <RustNumberTypes.h>
 #include <StepsConversionCommon.h>
 
-#ifdef CONSTEXPR_STEPS_CONVERSIONS_H
-#error "For now can not use both constexpr and runtime versions of lib for namespace collisions I don't feel like solving"
-#endif
 
 struct RuntimeStepsConversion {
     static constexpr f64 INCHES_PER_MM = 1.0 / 25.4;
@@ -30,7 +27,7 @@ struct RuntimeStepsConversion {
     f64 hpm_to_sps_ratio = 0.0;  // hundredths/min -> steps/sec
     f64 sps_to_hpm_ratio = 0.0;  // steps/sec -> hundredths/min
 
-    RuntimeStepsConversion() = default;
+    RuntimeStepsConversion() = delete;
 
     RuntimeStepsConversion(const f64 steps_per_motor_rev_,
                            const f64 motor_revs_per_pinion_rev_,
@@ -43,8 +40,7 @@ struct RuntimeStepsConversion {
 
     // Contract: you (the caller) may update any combination of public inputs,
     // then MUST call recalculate() before using conversions.
-    void recalculate() {
-        // If inputs are invalid, factors become 0.0 (predictable failure mode).
+    bool recalculate() {
         if (!(steps_per_motor_rev > 0.0) ||
             !(motor_revs_per_pinion_rev > 0.0) ||
             !(pinion_diameter_mm > 0.0)) {
@@ -52,7 +48,7 @@ struct RuntimeStepsConversion {
             hts_ratio = 0.0;
             hpm_to_sps_ratio = 0.0;
             sps_to_hpm_ratio = 0.0;
-            return;
+            return false;
         }
 
         const f64 pinion_circumference_mm = pinion_diameter_mm * PI_VAL;
@@ -68,6 +64,7 @@ struct RuntimeStepsConversion {
 
         hpm_to_sps_ratio = (steps_per_hundredth / SECONDS_PER_MINUTE); // hpm -> sps
         sps_to_hpm_ratio = (SECONDS_PER_MINUTE / steps_per_hundredth); // sps -> hpm
+        return true;
     }
 
     // Distance conversions (fast path: cast -> multiply -> round -> cast back)
