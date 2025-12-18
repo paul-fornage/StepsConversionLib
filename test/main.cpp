@@ -150,18 +150,17 @@ void constexpr_tests(){
 
 
 void runtime_tests() {
-    auto steps_conversion = RuntimeStepsConversion(
-        STEPS_PER_MOTOR_REV_MACRO, MOTOR_REVS_PER_PINION_REV_MACRO, PINION_DIAMETER_MM_MACRO);
+    const auto steps_conversion = RuntimeStepsConversion(ConstexprStepsConversion::STH_RATIO);
 
 #define COMPARE_WITH_CONSTEXPR(VAL) \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.steps_to_hundredths(VAL), ConstexprStepsConversion::steps_to_hundredths(VAL), "steps_to_hundredths failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.hundredths_to_steps(VAL), ConstexprStepsConversion::hundredths_to_steps(VAL), "hundredths_to_steps failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.sps_to_hpm(VAL), ConstexprStepsConversion::sps_to_hpm(VAL), "sps_to_hpm failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.hpm_to_sps(VAL), ConstexprStepsConversion::hpm_to_sps(VAL), "hpm_to_sps failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.f64_steps_to_hundredths(VAL), ConstexprStepsConversion::f64_steps_to_hundredths(VAL), "f64_steps_to_hundredths failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.f64_hundredths_to_steps(VAL), ConstexprStepsConversion::f64_hundredths_to_steps(VAL), "f64_hundredths_to_steps failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.f64_sps_to_hpm(VAL), ConstexprStepsConversion::f64_sps_to_hpm(VAL), "f64_sps_to_hpm failed"); \
-    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(steps_conversion.f64_hpm_to_sps(VAL), ConstexprStepsConversion::f64_hpm_to_sps(VAL), "f64_hpm_to_sps failed");
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::steps_to_hundredths(VAL), steps_conversion.steps_to_hundredths(VAL), "steps_to_hundredths failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::hundredths_to_steps(VAL), steps_conversion.hundredths_to_steps(VAL), "hundredths_to_steps failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::sps_to_hpm(VAL), steps_conversion.sps_to_hpm(VAL), "sps_to_hpm failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::hpm_to_sps(VAL), steps_conversion.hpm_to_sps(VAL), "hpm_to_sps failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::f64_steps_to_hundredths(VAL), steps_conversion.f64_steps_to_hundredths(VAL), "f64_steps_to_hundredths failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::f64_hundredths_to_steps(VAL), steps_conversion.f64_hundredths_to_steps(VAL), "f64_hundredths_to_steps failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::f64_sps_to_hpm(VAL), steps_conversion.f64_sps_to_hpm(VAL), "f64_sps_to_hpm failed"); \
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(ConstexprStepsConversion::f64_hpm_to_sps(VAL), steps_conversion.f64_hpm_to_sps(VAL), "f64_hpm_to_sps failed");
 
     COMPARE_WITH_CONSTEXPR(489000)
     COMPARE_WITH_CONSTEXPR(489)
